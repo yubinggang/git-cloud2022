@@ -1,3 +1,6 @@
 分布式系统面临的配置问题：
     使用SpringCloudConfig进行解决
     分为服务端和客户端进行搭建
+    搭建服务中心
+        spring-cloud-config-server
+        用于读取github的远程配置，其他客户端再从这个服务端读取配置。
