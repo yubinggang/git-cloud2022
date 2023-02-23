@@ -1,0 +1,56 @@
+服务降级
+    Hystrix断路器:用于处理分布式系统的延迟和容错的开源库，可以保证在一个依赖出问题时，不会导致整体服务失败
+        断路器相当于保险丝，当某个服务单元发生故障时，向调用方返回一个备用的响应，而不是长时间等待或者抛出异常，进而保证服务调用方
+    的线程不会被长时间的占用，从而避免雪崩。
+
+    服务降级FallBack
+        不让客户端等待返回一个预期的，备用的响应
+    服务熔断Break
+        达到最大服务量后，拒绝访问并调用服务降级的方法返回提示
+    服务限流FlowLimit
+        秒杀高并发操作。一秒钟N个请求，有序进行。
+
+***使用Jmeter进行高并发的测试
+    spring-cloud-starter-hystrix
+    服务降级：设置自身调用超时的峰值，峰值内可以正常运行，超过了需要有兜底的方法进行处理，做服务降级
+      在提供服务端：
+        @HystrixCommand(fallbackMethod = "兜底的方法名",commandProperties = {
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")
+        } )
+        在主启动类上@EnableCircuitBreaker进行激活
+        此时程序运行超时或者运行出异常都会进行服务降级，使用兜底方法。
+
+      在消费客户端：
+        配置文件：feign.hystrix.enable = true
+        在controller的方法上：
+        @HystrixCommand(fallbackMethod = "兜底的方法名",commandProperties = {
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")
+        } )
+        在主启动类上@EnableHystrix进行激活
+        此时程序运行超时或者运行出异常都会进行服务降级，使用兜底方法。
+
+      1.为了避免每一个方法都要设置一个服务降级方法与之对应，从而导致代码膨胀，设置全局的默认服务降级
+      2.为了避免微服务之间调用，对方服务器宕机根本找不到调用服务，在消费端设置通配服务降级
+
+    服务熔断：服务降级--》服务熔断--》恢复调用电路
+        应对雪崩效应的一种微服务链路保护机制，当扇出链路的某个微服务不可用或者响应时间过长，会进行服务降级，进而熔断该服务的调用，
+        当检测到节点微服务调用正常，恢复调用链路
+        @HystrixCommand(fallbackMethod = "paymentCircuitBreakerHandler",commandProperties = {
+                @HystrixProperty(name = "circuitBreaker.enabled", value = "true"),/* 是否开启断路器*/
+                @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),// 请求次数
+                @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000"), // 时间窗口期
+                @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "60"),// 失败率达到多少后跳闸
+        })
+        在对应的方法上添加该注解
+
+    服务监控hystrixDashboard
+        Hystrix提供了准确的实时监测页面
+        引入spring-cloud-starter-netflix-hystrix-dashboard
+        主启动类添加注解@EnableHystrixDashboard
+        访问http://localhost:9001/hystrix
+
+        如果想要监控其他的微服务，在其他微服务的主启动类中添加：
+
+        并在监控页面填写：http://localhost:8001/hystrix.stream
+
+

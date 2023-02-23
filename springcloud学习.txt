@@ -1,0 +1,79 @@
+springcloud = 分布式微服务架构的一站式解决方案，是多种微服务架构落地技术的集合体，俗称微服务全家桶
+     服务注册与发现：EUREKA（取消），zookeeper，consul，Nacos（推荐）
+     服务负载与调用：NETFLIX OSS RIBBON，LoadBalancer
+     服务负载与调用：NETFLIX FEIGN（取消），OpenFeign
+     服务熔断降级：HYSTRIX（取消），resilience4j，sentienl（推荐）
+     服务网关：NETFLIX ZUUL（取消）,zuul2，gateway（推荐）
+     服务分布式配置：SPRING CLOUD CONFIG（取消），Nacos（推荐）
+     服务总线：bUS(取消),Nacos(推荐)
+     服务开发：SPRING BOOT
+
+     版本选型：
+         spring cloud        	spring boot
+         2022.0.x aka Kilburn	3.0.x
+         2021.0.x aka Jubilee	2.6.x, 2.7.x (Starting with 2021.0.3)
+
+     项目的结构
+        project（父工程）
+            module
+            module
+
+    父工程的创建
+        1.新建工程
+        2.聚合总父工程名称
+        3.Maven选版本
+        4.工程名字
+        5.字符编码
+        6.注解生效激活
+        7.java编译版本选8
+        8.File Type过滤
+
+    子项目的构建
+        构建module
+        更改pom
+        新建application.xml文件写配置
+        构建主启动类
+        编写业务代码
+
+服务注册中心
+    eureka
+    zookeeper
+    consul
+    三个注册中心的异同点
+        CAP维度：
+            C--Consistency（强一致性）
+            A--Availability（可用性）
+            P--Partition tolerance（分区容错性）
+        CAP最多只能同时较好的满足两个，一个分布式系统不可能同时很好的满足这三个需求
+        AP（EUREKA）
+        CP（zookeeper/consul）
+
+服务调用
+    Spring cloud Ribbon -- 负载均衡 + RestTemplate调用
+        更改Ribbon的负载均衡机制。IRule接口定义了多种均衡机制。
+        eureka-client自己就引入了ribbon
+        在主程序包外新建一个规则配置类com.yu.myrule.MyRule
+            @Configuration
+            public class MyRule {
+
+                @Bean
+                public IRule iRule(){
+                    //返回均衡方式对应的对象
+                    //轮询方式
+                    return new RoundRobinRule();
+                    //随机方式
+            //        return new RandomRule();
+                }
+            }
+        并在主程序添加注释
+            @RibbonClient(name = "cloud-payment-service",configuration = MyRule.class)
+
+    openFeign:微服务调用接口 + @FeignClient("需要调用的微服务名称")
+        主启动上@EnableFeignClients
+
+
+
+
+
+
+

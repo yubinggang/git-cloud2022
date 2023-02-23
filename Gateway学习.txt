@@ -1,0 +1,14 @@
+服务网关--gateway--基于异步非阻塞模型
+    目标是提供同意的路由方式且基于Filter链的范式提供了网关的基本功能：安全、监控和指标、限流等。
+    使用的是Webflux中的reactor-netty响应式编程组件，底层使用了Netty通讯框架
+    路由：
+    断言
+    过滤器
+
+    引入依赖时
+        spring-cloud-starter-gateway
+        不要引入web和actuator
+
+    路由断言：
+    过滤器--自定义过滤器
+        找一个类实现主要接口；GlobalFilter;Ordered
