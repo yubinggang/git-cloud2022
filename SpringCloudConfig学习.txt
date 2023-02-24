@@ -1,6 +1,72 @@
 分布式系统面临的配置问题：
     使用SpringCloudConfig进行解决
     分为服务端和客户端进行搭建
-    搭建服务中心
+    1.搭建服务中心
         spring-cloud-config-server
         用于读取github的远程配置，其他客户端再从这个服务端读取配置。
+        配置：设置端口+cloud+eureka
+            spring:
+              application:
+                name: cloud-config-center #注册进Eureka服务器的微服务名
+              cloud:
+                config:
+                  server:
+                    git:
+                      uri: git@github.com:yubinggang/springcloud-config.git #GitHub上面的git仓库名字
+                      search-paths: #搜索目录
+                        - springcloud-config
+                  label: main #读取分支
+                  #启动成功后访问的路径 http://ip:3344/{label}/{application}-{profile}.yml 能访问的配置文件 就表示成功了
+
+        主启动类@EnableConfigServer
+
+        访问方式：
+            /{label}/{application}-{profile}.yml--------http://localhost:3344/master/config-dev.yml
+            /{application}-{profile}.yml--------http://localhost:3344/config-dev.yml            默认找master分支
+            /{application}/{profile}/{label}--------http://localhost:3344/config/dev/master     默认找master分支
+
+    2.客户端
+        spring-cloud-starter-config
+        新建bootstrap.yml用于加载配置中心的全局配置，application.yml书写自己的个性化配置
+            spring:
+              application:
+                name: config-client
+              cloud:
+                config:
+                  label: master  #分支名称
+                  name: config  #配置文件名称
+                  profile: dev  #读取后缀名称   上述三个综合http://localhost:3344/master/config-dev.yml
+                  uri: http://localhost:3344  #配置中心的地址
+
+            # 暴露监控端点
+            management:
+              endpoints:
+                web:
+                  exposure:
+                    include: "*"
+
+
+        controller类上添加注解@RefreshScope
+        在远程服务器的配置文件更改之后，3344会主动刷新更改的配置，但3355不会主动同步
+            需要工程师在更新配置文件后在命令窗口执行 curl -X POST "http://localhost:3355/actuator/refresh"
+
+
+
+以上是基于手动POST的刷新
+
+
+基于BUS的自动刷新和定点通知
+    BUS支持两种消息代理：RabbitMQ和Kafka
+    Spring Cloud BUS 能管理和传播分布式系统之间的消息，就像一个分布式执行器，可用于广播状态更改，事件推送等，也可以当做微服务之间的通信通道
+    3344，3355,3366都引入RabbitMQ的依赖
+        3344作为配置中心对外暴露服务：bus-refresh
+        3355和3366也引入依赖
+        最后想要全部通知：curl -X POST "http://localhost:3344/actuator/bus-refresh"
+            想要定点通知：curl -X POST "http://localhost:3344/actuator/bus-refresh/3355服务名：3355"
+                只通知3355，不通知3366
+
+
+
+
+
+
